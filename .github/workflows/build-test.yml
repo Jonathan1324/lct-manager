@@ -1,0 +1,153 @@
+name: Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      ubuntu_x86_64:
+        description: "Build for Ubuntu x86_64"
+        required: true
+        default: false
+        type: boolean
+      ubuntu_arm:
+        description: "Build for Ubuntu arm"
+        required: true
+        default: false
+        type: boolean
+      windows_x86_64:
+        description: "Build for Windows x86_64"
+        required: true
+        default: false
+        type: boolean
+      windows_arm:
+        description: "Build for Windows arm"
+        required: true
+        default: false
+        type: boolean
+      macos_x86_64:
+        description: "Build for macOS x86_64"
+        required: true
+        default: false
+        type: boolean
+      macos_arm:
+        description: "Build for macOS arm"
+        required: true
+        default: false
+        type: boolean
+
+      run_tests:
+        description: "Run tests"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  planner:
+    name: Planner
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set-matrix.outputs.matrix }}
+      should_run: ${{ steps.set-matrix.outputs.should_run }}
+      run_tests: ${{ steps.set-matrix.outputs.run_tests }}
+    steps:
+      - id: set-matrix
+        run: |
+          MATRIX='{"include":['
+          COUNT=0
+
+          if [[ "${{ github.event.inputs.ubuntu_x86_64 }}" == "true" ]]; then
+            MATRIX+='{"os":"ubuntu-24.04","arch":"x86_64","os_name":"linux"},'
+            COUNT=$((COUNT+1))
+          fi
+          if [[ "${{ github.event.inputs.ubuntu_arm }}" == "true" ]]; then
+            MATRIX+='{"os":"ubuntu-24.04-arm","arch":"arm64","os_name":"linux"},'
+            COUNT=$((COUNT+1))
+          fi
+          if [[ "${{ github.event.inputs.windows_x86_64 }}" == "true" ]]; then
+            MATRIX+='{"os":"windows-2025","arch":"x86_64","os_name":"windows"},'
+            COUNT=$((COUNT+1))
+          fi
+          if [[ "${{ github.event.inputs.windows_arm }}" == "true" ]]; then
+            MATRIX+='{"os":"windows-11-arm","arch":"arm64","os_name":"windows"},'
+            COUNT=$((COUNT+1))
+          fi
+          if [[ "${{ github.event.inputs.macos_x86_64 }}" == "true" ]]; then
+            MATRIX+='{"os":"macos-15-intel","arch":"x86_64","os_name":"macos"},'
+            COUNT=$((COUNT+1))
+          fi
+          if [[ "${{ github.event.inputs.macos_arm }}" == "true" ]]; then
+            MATRIX+='{"os":"macos-15","arch":"arm64","os_name":"macos"},'
+            COUNT=$((COUNT+1))
+          fi
+
+          if [ $COUNT -eq 0 ]; then
+            # dummy
+            MATRIX+='{"os":"ubuntu-latest","arch":"x86_64","os_name":"skip","skip":"true"}'
+            SHOULD_RUN=false
+          else
+            # remove last comma
+            MATRIX="${MATRIX%,}"
+            SHOULD_RUN=true
+          fi
+
+          if [[ "${{ github.event.inputs.run_tests }}" == "true" ]]; then
+            RUN_TESTS=true
+          else
+            RUN_TESTS=false
+          fi
+
+          MATRIX+=']}'
+
+          echo "Matrix=$MATRIX" >> $GITHUB_OUTPUT
+          echo "should_run=$SHOULD_RUN" >> $GITHUB_OUTPUT
+          echo "run_tests=$RUN_TESTS" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build
+    needs: planner
+
+    strategy:
+      matrix: ${{ fromJson(needs.planner.outputs.matrix) }}
+  
+    runs-on: ${{ matrix.os }}
+
+    if: ${{ needs.planner.outputs.should_run == 'true' }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install build dependencies
+        run: |
+          if [ "${{ matrix.os_name }}" = "windows" ]; then
+            python scripts/install_build_deps.py
+          else
+            python3 scripts/install_build_deps.py
+          fi
+        shell: bash
+
+      - name: Build the project
+        run: |
+          FLAGS="-a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} "
+          FLAGS+="--os ${{ matrix.os_name }} --arch ${{ matrix.arch }} "
+          if [ "${{ needs.planner.outputs.run_tests }}" != "true" ]; then
+            FLAGS+="--no-test "
+          fi
+
+          if [ "${{ matrix.os_name }}" = "windows" ]; then
+            python -m ci.ci $FLAGS
+          else
+            python -m ci.ci $FLAGS
+          fi
+        shell: bash
+
+      - name: Upload binaries as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lct-${{ matrix.os_name }}-${{ matrix.arch }}
+          path: dist/
+
+      - name: Upload logs as artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: lct-${{ matrix.os_name }}-${{ matrix.arch }}-logs
+          path: logs/
