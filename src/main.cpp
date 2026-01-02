@@ -1,9 +1,5 @@
-extern "C" {
-    #include <stdio.h>
-    #include <stdlib.h>
-    #include <string.h>
-}
-
+#include <iostream>
+#include <cstdlib>
 #include <filesystem>
 #include "shell/shell.h"
 #include "download/source.h"
@@ -18,7 +14,7 @@ int buildToolchain(void* null)
 #else
     const char* cmd = "python3 -m ci.ci --no-test";
 #endif
-    return system(cmd);
+    return std::system(cmd);
 }
 
 typedef unsigned char Command;
@@ -27,15 +23,25 @@ typedef unsigned char Command;
 #define PATH_MAKE_STRING(name) \
     const std::string& name##_string = name.string()
 
+#define DO_LOCAL_TEST true
+
 int main(int argc, const char* argv[])
 {
     const char* version_str = "v0.1.0-alpha.5";
     
+#if DO_LOCAL_TEST == 0
+# ifdef _WIN32
     const fs::path main_dir = "test";
+# else
+    const fs::path main_dir = "~/.lct";
+# endif
+#else
+    const fs::path main_dir = "test";
+#endif
 
     const fs::path source_dir = main_dir / "archives";
     PATH_MAKE_STRING(source_dir);
-    const fs::path dest_dir = main_dir / "b";
+    const fs::path dest_dir = main_dir / "installed";
     PATH_MAKE_STRING(dest_dir);
 
     Command command = COMMAND_INSTALL;
@@ -46,13 +52,13 @@ int main(int argc, const char* argv[])
             sh_mkdir(source_dir_string.c_str());
             char* name = downloadSource(version_str, source_dir_string.c_str());
             if (!name) {
-                fputs("Couldn't download source", stderr);
+                std::cerr << "Couldn't download source of " << version_str << std::endl;
                 return 1;
             }
             const fs::path full_source = source_dir / name;
             PATH_MAKE_STRING(full_source);
 
-            free(name);
+            std::free(name);
 
             openDir(full_source_string.c_str(), buildToolchain, NULL);
 

@@ -39,23 +39,28 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install build dependencies
+      - name: Install build dependencies on Linux/macOS
+        if: ${{ matrix.os_name != 'windows' }}
         run: |
-          if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python scripts/install_build_deps.py
-          else
-            python3 scripts/install_build_deps.py
-          fi
+          python3 scripts/install_build_deps.py
         shell: bash
 
-      - name: Build the project
+      - name: Install build dependencies on Windows
+        if: ${{ matrix.os_name == 'windows' }}
         run: |
-          if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python -m ci.ci --no-test --no-log -a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
-          else
-            python3 -m ci.ci --no-test --no-log -a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
-          fi
-        shell: bash
+          python scripts/install_build_deps.py
+        shell: cmd
+
+      - name: Build the project on Linux/macOS
+        if: ${{ matrix.os_name != 'windows' }}
+        run: |
+          python3 -m ci.ci --no-test --no-log -a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
+
+      - name: Build the project on Linux/macOS
+        if: ${{ matrix.os_name == 'windows' }}
+        run: |
+          python -m ci.ci --no-test --no-log -a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
+        shell: cmd
 
       - name: Upload archive as release asset
         uses: softprops/action-gh-release@v2

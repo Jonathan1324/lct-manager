@@ -116,29 +116,36 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install build dependencies
+      - name: Install build dependencies on Linux/macOS
+        if: ${{ matrix.os_name != 'windows' }}
         run: |
-          if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python scripts/install_build_deps.py
-          else
-            python3 scripts/install_build_deps.py
-          fi
+          python3 scripts/install_build_deps.py
         shell: bash
 
-      - name: Build the project
+      - name: Install build dependencies on Windows
+        if: ${{ matrix.os_name == 'windows' }}
+        run: |
+          python scripts/install_build_deps.py
+        shell: cmd
+
+      - name: Build on Linux/macOS
+        if: ${{ matrix.os_name != 'windows' }}
         run: |
           FLAGS="-a -A lct-${{ matrix.os_name }}-${{ matrix.arch }} "
           FLAGS+="--os ${{ matrix.os_name }} --arch ${{ matrix.arch }} "
           if [ "${{ needs.planner.outputs.run_tests }}" != "true" ]; then
             FLAGS+="--no-test "
           fi
+          python3 -m ci.ci $FLAGS
 
-          if [ "${{ matrix.os_name }}" = "windows" ]; then
-            python -m ci.ci $FLAGS
-          else
-            python -m ci.ci $FLAGS
-          fi
-        shell: bash
+      - name: Build on Windows
+        if: ${{ matrix.os_name == 'windows' }}
+        run: |
+          set FLAGS=-a -A lct-${{ matrix.os_name }}-${{ matrix.arch }}
+          set FLAGS=%FLAGS% --os ${{ matrix.os_name }} --arch ${{ matrix.arch }}
+          if not "${{ needs.planner.outputs.run_tests }}"=="true" set FLAGS=%FLAGS% --no-test
+          python -m ci.ci %FLAGS%
+        shell: cmd
 
       - name: Upload binaries as artifact
         uses: actions/upload-artifact@v4

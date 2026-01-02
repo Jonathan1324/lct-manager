@@ -27,7 +27,7 @@ BIN_DIR = $(BUILD_DIR)
 all: lct
 
 lct:
-	@$(MAKE) -C $(SRC_DIR)  				\
+	@"$(MAKE)" -C $(SRC_DIR)  				\
 		DEBUG=$(DEBUG)						\
 											\
 		CC=$(CC) CFLAGS="$(CFLAGS)" 		\
@@ -39,7 +39,8 @@ lct:
 		SRC_DIR=$(SRC_DIR)  				\
 		LIB=core							\
 		BUILD_DIR=$(BUILD_DIR)  			\
-		BIN_DIR=$(BIN_DIR)
+		BIN_DIR=$(BIN_DIR)					\
+		$(ARGS_OS)
 
 clean:
-	@rm -rf $(BUILD_DIR)
+	@$(RM) $(BUILD_DIR)

@@ -3,6 +3,8 @@ build/
 dist/
 archives/
 
+test/
+
 logs/
 
 __pycache__/
