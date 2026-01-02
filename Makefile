@@ -18,8 +18,8 @@ else
 	BUILD_DIR = build/release
 endif
 
-SRC_DIR := $(shell pwd)/$(SRC_DIR)
-BUILD_DIR := $(shell pwd)/$(BUILD_DIR)
+SRC_DIR := $(shell $(PWD))/$(SRC_DIR)
+BUILD_DIR := $(shell $(PWD))/$(BUILD_DIR)
 BIN_DIR = $(BUILD_DIR)
 
 .PHONE: all clean
