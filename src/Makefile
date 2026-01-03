@@ -33,7 +33,7 @@ $(TARGET): $(C_OBJS) $(CPP_OBJS) $(ASM_OBJS) $(wildcard $(LIB_DIR)/*.a)
 	@$(MKDIR) $(BIN_DIR)
 	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
 ifeq (${DEBUG},0)
-	$(STRIP) $(STRIPFLAGS) $@
+	@$(STRIP) $(STRIPFLAGS) $@
 endif
 
 -include $(DEPS)
