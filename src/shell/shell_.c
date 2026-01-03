@@ -5,6 +5,7 @@
 #else
 #include <unistd.h>
 #include <sys/wait.h>
+#include <sys/select.h>
 #include <fcntl.h>
 #endif
 
@@ -151,35 +152,66 @@ CommandResult invokeSystemCall(const char* cmd)
         close(outPipe[1]);
         close(errPipe[1]);
 
-        char buf[512];
-        ssize_t n;
-
         size_t stdoutCap = 4096, stdoutLen = 0;
-        result.stdout_str = (char*)malloc(stdoutCap);
-        if (!result.stdout_str) { result.exit_code = -1; return result; }
-
-        while ((n = read(outPipe[0], buf, sizeof(buf))) > 0) {
-            if (stdoutLen + n + 1 > stdoutCap) {
-                stdoutCap = (stdoutLen + n + 1) * 2;
-                result.stdout_str = (char*)realloc(result.stdout_str, stdoutCap);
-            }
-            memcpy(result.stdout_str + stdoutLen, buf, n);
-            stdoutLen += n;
-        }
-        result.stdout_str[stdoutLen] = '\0';
-
         size_t stderrCap = 4096, stderrLen = 0;
+        result.stdout_str = (char*)malloc(stdoutCap);
         result.stderr_str = (char*)malloc(stderrCap);
-        if (!result.stderr_str) { free(result.stdout_str); result.exit_code = -1; return result; }
-
-        while ((n = read(errPipe[0], buf, sizeof(buf))) > 0) {
-            if (stderrLen + n + 1 > stderrCap) {
-                stderrCap = (stderrLen + n + 1) * 2;
-                result.stderr_str = (char*)realloc(result.stderr_str, stderrCap);
-            }
-            memcpy(result.stderr_str + stderrLen, buf, n);
-            stderrLen += n;
+        if (!result.stdout_str || !result.stderr_str) { 
+            free(result.stdout_str); 
+            free(result.stderr_str); 
+            result.exit_code = -1; 
+            return result; 
         }
+
+        char buf[512];
+        int out_done = 0, err_done = 0;
+
+        int flags_out = fcntl(outPipe[0], F_GETFL, 0);
+        fcntl(outPipe[0], F_SETFL, flags_out | O_NONBLOCK);
+        int flags_err = fcntl(errPipe[0], F_GETFL, 0);
+        fcntl(errPipe[0], F_SETFL, flags_err | O_NONBLOCK);
+
+        while (!out_done || !err_done) {
+            fd_set readfds;
+            FD_ZERO(&readfds);
+            if (!out_done) FD_SET(outPipe[0], &readfds);
+            if (!err_done) FD_SET(errPipe[0], &readfds);
+
+            int maxfd = (outPipe[0] > errPipe[0] ? outPipe[0] : errPipe[0]) + 1;
+            if (select(maxfd, &readfds, NULL, NULL, NULL) < 0) break;
+
+            // STDOUT
+            if (FD_ISSET(outPipe[0], &readfds)) {
+                ssize_t n = read(outPipe[0], buf, sizeof(buf));
+                if (n > 0) {
+                    if (stdoutLen + n + 1 > stdoutCap) {
+                        stdoutCap = (stdoutLen + n + 1) * 2;
+                        result.stdout_str = (char*)realloc(result.stdout_str, stdoutCap);
+                    }
+                    memcpy(result.stdout_str + stdoutLen, buf, n);
+                    stdoutLen += n;
+                } else {
+                    out_done = 1;
+                }
+            }
+
+            // STDERR
+            if (FD_ISSET(errPipe[0], &readfds)) {
+                ssize_t n = read(errPipe[0], buf, sizeof(buf));
+                if (n > 0) {
+                    if (stderrLen + n + 1 > stderrCap) {
+                        stderrCap = (stderrLen + n + 1) * 2;
+                        result.stderr_str = (char*)realloc(result.stderr_str, stderrCap);
+                    }
+                    memcpy(result.stderr_str + stderrLen, buf, n);
+                    stderrLen += n;
+                } else {
+                    err_done = 1;
+                }
+            }
+        }
+
+        result.stdout_str[stdoutLen] = '\0';
         result.stderr_str[stderrLen] = '\0';
 
         int status;
