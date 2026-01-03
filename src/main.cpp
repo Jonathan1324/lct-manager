@@ -79,6 +79,7 @@ int main(int argc, const char* argv[])
             }
 
             try {
+                std::cout << "=> Installing " << state.version << "..." << std::endl;
                 install_version(latest_version, source_dir, install_dir);
                 state.installed = 1;
                 state.version = latest_version;

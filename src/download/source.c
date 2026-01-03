@@ -140,7 +140,7 @@ char* downloadSource(const char* version, const char* path)
     free(url);
 
     // TODO: currently here
-    fputs("=> Unarchiving source of ", stdout);
+    fputs("==> Unarchiving source of ", stdout);
     fputs(version, stdout);
     fputs("...\n", stdout);
     fflush(stdout);

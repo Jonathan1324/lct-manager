@@ -28,7 +28,7 @@ void install_version(const char* version_str, const fs::path& source_dir, const 
 
     sh_mkdir(source_dir_string.c_str());
 
-    std::cout << "=> Downloading source of " << version_str << "..." << std::endl;
+    std::cout << "==> Downloading source of " << version_str << "..." << std::endl;
     std::cout.flush();
     char* name = downloadSource(version_str, source_dir_string.c_str());
     if (!name) {
@@ -39,7 +39,7 @@ void install_version(const char* version_str, const fs::path& source_dir, const 
 
     std::free(name);
 
-    std::cout << "=> Building source of " << version_str << "..." << std::endl;
+    std::cout << "==> Building source of " << version_str << "..." << std::endl;
     CommandResult res = openDir(full_source_string.c_str(), buildToolchain, NULL);
     if (res.exit_code != 0) {
         sh_remove(full_source_string.c_str());
@@ -49,7 +49,7 @@ void install_version(const char* version_str, const fs::path& source_dir, const 
     const fs::path full_dist = full_source / "dist";
     PATH_MAKE_STRING(full_dist);
 
-    std::cout << "=> Copying 'dist/' of " << version_str << "..." << std::endl;
+    std::cout << "==> Copying 'dist/' of " << version_str << "..." << std::endl;
     res = copy(full_dist_string.c_str(), dest_dir_string.c_str());
     if (res.exit_code != 0) {
         sh_remove(full_source_string.c_str());
