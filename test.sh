@@ -1,3 +1,3 @@
-python3 -m ci.ci
+python3 -m ci.ci -d
 
 ./dist/bin/lct $@

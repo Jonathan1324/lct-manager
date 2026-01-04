@@ -1,5 +1,5 @@
 @echo off
 
-python -m ci.ci
+python -m ci.ci -d
 
 .\dist\bin\lct %*

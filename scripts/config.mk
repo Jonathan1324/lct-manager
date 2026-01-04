@@ -15,7 +15,7 @@ VERSION ?= commit
 INCLUDE_FLAGS = -I$(abspath src/libs/core) -I$(abspath src/libs/rust)
 COMMON_WARNINGS = -Wall -Wextra
 OPT_FLAGS = -O2
-DEBUG_FLAGS = -g
+DEBUG_FLAGS = -g -DDEBUG_BUILD
 RELEASE_FLAGS = -DNDEBUG
 SECURITY_FLAGS = -fstack-protector-strong -D_FORTIFY_SOURCE=2 -fPIC
 
@@ -40,9 +40,6 @@ ifeq ($(OS_NAME),macos)
 endif
 
 ifeq ($(DEBUG),0)
-	CFLAGS += -DVERSION=\"$(VERSION)\"
-	CXXFLAGS += -DVERSION=\"$(VERSION)\"
-
 	ifneq ($(OS_NAME),macos)
 		LDFLAGS += $(STATIC_FLAGS)
 	endif

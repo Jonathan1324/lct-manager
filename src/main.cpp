@@ -14,18 +14,27 @@ namespace fs = std::filesystem;
 
 typedef unsigned char Command;
 #define COMMAND_NONE        ((Command)0)
-#define COMMAND_INSTALL     ((Command)1)
-#define COMMAND_UNINSTALL   ((Command)2)
-#define COMMAND_REINSTALL   ((Command)3)
-#define COMMAND_UPDATE      ((Command)4)
-#define COMMAND_LIST        ((Command)5)
+#define COMMAND_HELP        ((Command)1)
+#define COMMAND_VERSION     ((Command)2)
+#define COMMAND_INSTALL     ((Command)3)
+#define COMMAND_UNINSTALL   ((Command)4)
+#define COMMAND_REINSTALL   ((Command)5)
+#define COMMAND_UPDATE      ((Command)6)
+#define COMMAND_LIST        ((Command)7)
+#define COMMAND_PATH        ((Command)8)
 
+#ifdef DEBUG_BUILD
 #define DO_LOCAL_TEST 1
+#else
+#define DO_LOCAL_TEST 0
+#endif
 
-const char* latest_version = "v0.1.0-alpha.5-jan2026.2";
+const char* first_version = "v0.1.0-alpha.5-jan2026.2";
+const char* latest_version = "v0.1.0-alpha.5-jan2026.3";
 
 static std::unordered_map<std::string, int> versions = {
-    {"v0.1.0-alpha.5-jan2026.2", 0}
+    {"v0.1.0-alpha.5-jan2026.2", 0},
+    {"v0.1.0-alpha.5-jan2026.3", 1}
 };
 
 static std::unordered_map<std::string, std::vector<std::string>> valid_tools_deps = {
@@ -47,6 +56,18 @@ static std::unordered_map<std::string, std::vector<std::string> > bundles = {
     {"fun", {"lbf", "ljoke", "lhoho"}}
 };
 
+#define VERSION "v0.1.0-alpha"
+
+void printVersion(bool use_ansi)
+{
+    std::cout << "LCT Manager " << VERSION << std::endl;
+    std::cout << "Supports LCT " << first_version << " through " << latest_version << std::endl;
+    std::cout << "Compiled on " << __DATE__ << std::endl;
+    std::cout << "License: BSD 3-Clause" << std::endl;
+
+    std::cout.flush();
+}
+
 void printHelp(const char* name, std::ostream& out, bool use_ansi)
 {
     out << "Usage: " << name << " <command> <args>" << std::endl;
@@ -56,7 +77,12 @@ void printHelp(const char* name, std::ostream& out, bool use_ansi)
     out << "> " << name << " reinstall <tools>" << std::endl;
     out << "> " << name << " update <tools>" << std::endl;
     out << "> " << name << " list" << std::endl;
+    out << "> " << name << " path" << std::endl;
 }
+
+#define ARG_CMP(n, str) (std::strcmp(argv[n], str) == 0)
+#define ARG_IS_HELP(n) (ARG_CMP(n, "help") || ARG_CMP(n, "-h") || ARG_CMP(n, "--help"))
+#define ARG_IS_VERSION(n) (ARG_CMP(n, "version") || ARG_CMP(n, "-v") || ARG_CMP(n, "--version"))
 
 int main(int argc, const char* argv[])
 {
@@ -68,6 +94,8 @@ int main(int argc, const char* argv[])
 
     const fs::path source_dir = main_dir / "archives";
     const fs::path install_dir = main_dir / "current";
+    const fs::path bin_dir = install_dir / "bin";
+    const std::string bin_dir_string = bin_dir.string();
 
     bool use_ansi = static_cast<bool>(supportsANSI());
 
@@ -92,16 +120,28 @@ int main(int argc, const char* argv[])
     }
 
     Command command = COMMAND_NONE;
-    const char* cmd_str = argv[1];
 
-    if      (std::strcmp(cmd_str, "install") == 0)   command = COMMAND_INSTALL;
-    else if (std::strcmp(cmd_str, "uninstall") == 0) command = COMMAND_UNINSTALL;
-    else if (std::strcmp(cmd_str, "reinstall") == 0) command = COMMAND_REINSTALL;
-    else if (std::strcmp(cmd_str, "update") == 0)    command = COMMAND_UPDATE;
-    else if (std::strcmp(cmd_str, "list") == 0)      command = COMMAND_LIST;
+    if      (ARG_IS_HELP(1))          command = COMMAND_HELP;
+    else if (ARG_IS_VERSION(1))       command = COMMAND_VERSION;
+    else if (ARG_CMP(1, "install"))   command = COMMAND_INSTALL;
+    else if (ARG_CMP(1, "uninstall")) command = COMMAND_UNINSTALL;
+    else if (ARG_CMP(1, "reinstall")) command = COMMAND_REINSTALL;
+    else if (ARG_CMP(1, "update"))    command = COMMAND_UPDATE;
+    else if (ARG_CMP(1, "list"))      command = COMMAND_LIST;
+    else if (ARG_CMP(1, "path"))      command = COMMAND_PATH;
 
     switch (command)
     {
+        case COMMAND_HELP: {
+            printHelp(argv[0], std::cout, use_ansi);
+            break;
+        }
+
+        case COMMAND_VERSION: {
+            printVersion(use_ansi);
+            break;
+        }
+
         case COMMAND_UNINSTALL: case COMMAND_REINSTALL: {
             std::vector<std::string> tools;
             std::unordered_set<std::string> added_tools;
@@ -462,9 +502,64 @@ int main(int argc, const char* argv[])
 
             break;
         }
+
+        case COMMAND_PATH: {
+            std::cout << "LCT-Directory: " << main_dir << std::endl;
+            std::cout << std::endl;
+
+            std::cout << "Add '" << bin_dir_string << "' to your PATH. If you don't know how to do this, follow these steps:" << std::endl;
+
+#ifdef _WIN32
+            std::cout << "1) Terminal:\n";
+            std::cout << "   setx PATH \"%PATH%;" << bin_dir_string << "\"\n\n";
+
+            std::cout << "2) Current terminal:\n";
+            std::cout << "   set PATH=%PATH%;" << bin_dir_string << "\n";
+            std::cout << "   # or in PowerShell:\n";
+            std::cout << "   $env:PATH += \";" << bin_dir_string << "\"\n\n";
+
+            std::cout << "3) GUI apps (requires logout/login):\n";
+            std::cout << "   # Changes via setx or PowerShell are picked up after logout/login\n";
+
+#elif defined(__APPLE__) || defined(__MACH__)
+            std::cout << "1) Terminal:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.zshrc\n";
+            std::cout << "   # or when using bash:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.bashrc\n\n";
+
+            std::cout << "2) Current terminal:\n";
+            std::cout << "   export PATH=\"$PATH:" << bin_dir_string << "\"\n\n";
+
+            std::cout << "3) GUI apps:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.zprofile\n";
+            std::cout << "   # or when using bash:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.bash_profile\n";
+            std::cout << "   # Effects take place after logout/login\n";
+
+#elif defined(__linux__)
+            std::cout << "1) Terminal:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.bashrc\n";
+            std::cout << "   # or when using zsh:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.zshrc\n\n";
+
+            std::cout << "2) Current terminal:\n";
+            std::cout << "   export PATH=\"$PATH:" << bin_dir_string << "\"\n\n";
+
+            std::cout << "3) GUI apps:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.profile\n";
+            std::cout << "   # or when using zsh:\n";
+            std::cout << "   echo 'export PATH=\"$PATH:" << bin_dir_string << "\"' >> ~/.zprofile\n";
+            std::cout << "   # GUI apps will see it after logout/login\n";
+
+#else
+            std::cout << "Please use OS-specific commands to add \"" << bin_dir_string << "\" to PATH.\n";
+#endif
+
+            break;
+        }
         
         default:
-            std::cerr << "Unknown command: " << cmd_str << std::endl;
+            std::cerr << "Unknown command: " << argv[1] << std::endl;
             return 1;
     }
 
