@@ -37,6 +37,24 @@ def stage(debug: bool) -> bool:
                     logger.debug(f"Set executable permission for {dst}")
             else:
                 logger.warning(f"{binary} does not exist")
+
+    licenses = Path(f"build/{build_type}/third_party_licenses/")
+    licenses_dist = dist_dir / "THIRD_PARTY_LICENSES"
+
+    if licenses.exists():
+        licenses_dist.mkdir(parents=True, exist_ok=True)
+        for item in licenses.iterdir():
+            dest = licenses_dist / item.name
+            if item.is_dir():
+                shutil.copytree(item, dest, dirs_exist_ok=True)
+            else:
+                shutil.copy2(item, dest)
+
+    project_license = Path("LICENSE")
+    license_dist = dist_dir / "LICENSE"
+
+    if project_license.exists():
+        shutil.copy2(project_license, license_dist)
     
     logger.info(f"Staged {len(list(dist_bin.iterdir()))} binaries in dist/bin")
 

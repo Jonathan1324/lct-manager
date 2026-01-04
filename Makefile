@@ -42,6 +42,8 @@ lct:
 		BUILD_DIR=$(BUILD_DIR)  			\
 		BIN_DIR=$(BIN_DIR)					\
 		EXE_EXT=$(EXE_EXT)					\
+		LICENSE_DIR="$(LICENSE_DIR)"		\
+		TPL_TXT="$(LICENSE_DIR)/lasm.txt"	\
 		$(ARGS_OS)
 
 clean:

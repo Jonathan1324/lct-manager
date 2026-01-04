@@ -16,7 +16,7 @@ typedef unsigned char Command;
 
 #define DO_LOCAL_TEST 1
 
-const char* latest_version = "v0.1.0-alpha.5-jan2026.1";
+const char* latest_version = "v0.1.0-alpha.5-jan2026.2";
 
 int main(int argc, const char* argv[])
 {
