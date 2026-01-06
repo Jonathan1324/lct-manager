@@ -149,7 +149,7 @@ if __name__ == "__main__":
     if (os_uname == "windows"): os = OS.Windows
     elif (os_uname == "darwin"): os = OS.macOS
     elif (os_uname == "linux"): os = OS.Linux
-    else: raise ValueError("Unknown architecture")
+    else: raise ValueError("Unknown os")
     cpu_arch = platform.machine().lower()
     if (cpu_arch in ["x86_64", "amd64"]): arch = ARCH.x86_64
     elif (cpu_arch in ["arm64", "aarch64"]): arch = ARCH.ARM64

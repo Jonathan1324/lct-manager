@@ -39,7 +39,9 @@ ifeq ($(UNAME_RESULT),NOT_FOUND)
 endif
 
 ifeq ($(WINDOWS_NATIVE),1)
-    PWD = cd
+    SHELL := cmd.exe
+
+    PWD = cd                    # CMD
     LIST = $(shell $(PWD))/scripts/list.bat
     MKDIR = $(shell $(PWD))/scripts/mkdir.bat
     RM = $(shell $(PWD))/scripts/rm.bat

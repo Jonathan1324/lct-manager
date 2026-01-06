@@ -1,4 +1,5 @@
 build/
+.buildcache.json
 
 dist/
 archives/
