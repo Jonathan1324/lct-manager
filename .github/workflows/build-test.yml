@@ -116,18 +116,6 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Install build dependencies on Linux/macOS
-        if: ${{ matrix.os_name != 'windows' }}
-        run: |
-          python3 scripts/install_build_deps.py
-        shell: bash
-
-      - name: Install build dependencies on Windows
-        if: ${{ matrix.os_name == 'windows' }}
-        run: |
-          python scripts/install_build_deps.py
-        shell: cmd
-
       - name: Build on Linux/macOS
         if: ${{ matrix.os_name != 'windows' }}
         run: |
