@@ -34,10 +34,11 @@ typedef unsigned char Command;
 #endif
 
 const char* first_version = "v0.1.0-alpha.5-jan2026.4";
-const char* latest_version = "v0.1.0-alpha.5-jan2026.4";
+const char* latest_version = "v0.1.0-alpha.5-jan2026.5";
 
 static std::unordered_map<std::string, int> versions = {
-    {"v0.1.0-alpha.5-jan2026.4", 0}
+    {"v0.1.0-alpha.5-jan2026.4", 0},
+    {"v0.1.0-alpha.5-jan2026.5", 1}
 };
 
 static std::unordered_map<std::string, std::vector<std::string>> valid_tools_deps = {
