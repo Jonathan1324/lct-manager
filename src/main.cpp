@@ -60,7 +60,7 @@ static std::unordered_map<std::string, std::vector<std::string> > bundles = {
     {"fun", {"lbf", "ljoke", "lhoho"}}
 };
 
-#define VERSION "v0.1.0-alpha-after"
+#define VERSION "v0.1.0-alpha.2"
 
 void printVersion(bool use_ansi)
 {
