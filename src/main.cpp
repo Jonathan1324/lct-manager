@@ -33,7 +33,7 @@ typedef unsigned char Command;
 #define DO_LOCAL_TEST 0
 #endif
 
-#define VERSION "v0.1.0-alpha.3"
+#define VERSION "v0.1.0-alpha.3-after"
 
 const char* first_version = "v0.1.0-alpha.5-jan2026.4";
 const char* latest_version = "v0.1.0-alpha.5-feb2026.1";
