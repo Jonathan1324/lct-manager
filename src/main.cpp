@@ -33,14 +33,15 @@ typedef unsigned char Command;
 #define DO_LOCAL_TEST 0
 #endif
 
-#define VERSION "v0.1.0-alpha.2-after"
+#define VERSION "v0.1.0-alpha.3"
 
 const char* first_version = "v0.1.0-alpha.5-jan2026.4";
-const char* latest_version = "v0.1.0-alpha.5-jan2026.5";
+const char* latest_version = "v0.1.0-alpha.5-feb2026.1";
 
 static std::unordered_map<std::string, int> versions = {
     {"v0.1.0-alpha.5-jan2026.4", 0},
-    {"v0.1.0-alpha.5-jan2026.5", 1}
+    {"v0.1.0-alpha.5-jan2026.5", 1},
+    {"v0.1.0-alpha.5-feb2026.1", 2}
 };
 
 static std::unordered_map<std::string, std::vector<std::string>> valid_tools_deps = {
@@ -494,11 +495,24 @@ int main(int argc, const char* argv[])
                 if (use_ansi) std::cout << "\033[0m";
 
                 if (is_installed) {
+                    int version_value = -1;
+
                     auto version = state.GetVersion(tool);
                     if (version.has_value()) {
+                        auto versionIt = versions.find(version->get());
+                        if (versionIt != versions.end()) {
+                            version_value = versionIt->second;
+                        }
+
                         std::cout << " ";
-                        if (use_ansi) std::cout << "\033[36m";
-                        else          std::cout << "(";
+                        if (use_ansi) {
+                            if (version_value >= latestVersionIt->second) std::cout << "\033[36m";
+                            else                                          std::cout << "\033[33m";
+                        }
+                        else {
+                            if (version_value >= latestVersionIt->second) std::cout << "(";
+                            else                                          std::cout << "!(";
+                        }
                         std::cout << version->get();
                         if (use_ansi) std::cout << "\033[0m";
                         else          std::cout << ")";
