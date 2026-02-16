@@ -14,6 +14,7 @@ namespace fs = std::filesystem;
 
 struct buildData {
     std::vector<std::string> tools;
+    const char* version;
 };
 
 CommandResult buildToolchain(void* vdata)
@@ -21,12 +22,15 @@ CommandResult buildToolchain(void* vdata)
     buildData* data = reinterpret_cast<buildData*>(vdata);
 
 #ifdef _WIN32
-    const char* cmd_base = "python -m ci.ci --no-test";
+    const char* cmd_base = "python -m ci.ci --no-test -v ";
 #else
-    const char* cmd_base = "python3 -m ci.ci --no-test";
+    const char* cmd_base = "python3 -m ci.ci --no-test -v ";
 #endif
 
     std::string cmd = cmd_base;
+    cmd += '\"';
+    cmd += data->version;
+    cmd += '\"';
     for (std::string& tool : data->tools) cmd += " " + tool;
 
     return invokeSystemCall(cmd.c_str());
@@ -69,6 +73,7 @@ void install_version(const char* version_str, const fs::path& source_dir, const 
 
     buildData build_data;
     build_data.tools = tools;
+    build_data.version = version_str;
 
     std::cout << "==> Building source of ";
     if (use_ansi) std::cout << "\033[36m";
