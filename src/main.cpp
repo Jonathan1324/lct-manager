@@ -10,7 +10,6 @@
 #include "data/state.hpp"
 #include "terminal/terminal.h"
 #include "shell/shell.h"
-#include "info.hpp"
 
 namespace fs = std::filesystem;
 
@@ -25,7 +24,6 @@ typedef unsigned char Command;
 #define COMMAND_LIST        ((Command)7)
 #define COMMAND_PATH        ((Command)8)
 #define COMMAND_REMOVE      ((Command)9)
-#define COMMAND_INFO        ((Command)10)
 
 #ifdef DEBUG_BUILD
 #define DO_LOCAL_TEST 1
@@ -63,6 +61,8 @@ static std::unordered_map<std::string, std::vector<std::string> > bundles = {
 
 void printVersion(bool use_ansi)
 {
+    (void)use_ansi;
+
     std::cout << "LCT Manager " << VERSION << std::endl;
     std::cout << "Supports LCT " << first_version << " through " << latest_version << std::endl;
     std::cout << "Compiled on " << __DATE__ << std::endl;
@@ -73,6 +73,8 @@ void printVersion(bool use_ansi)
 
 void printHelp(const char* name, std::ostream& out, bool use_ansi)
 {
+    (void)use_ansi;
+
     out << "Usage: " << name << " <command> <args>" << std::endl;
 
     out << "> " << name << " install <tools>" << std::endl;
@@ -82,7 +84,6 @@ void printHelp(const char* name, std::ostream& out, bool use_ansi)
     out << "> " << name << " list" << std::endl;
     out << "> " << name << " path" << std::endl;
     out << "> " << name << " remove" << std::endl;
-    out << "> " << name << " info" << std::endl;
 }
 
 #define ARG_CMP(n, str) (std::strcmp(argv[n], str) == 0)
@@ -140,7 +141,6 @@ int main(int argc, const char* argv[])
     else if (ARG_CMP(1, "list"))      command = COMMAND_LIST;
     else if (ARG_CMP(1, "path"))      command = COMMAND_PATH;
     else if (ARG_CMP(1, "remove"))    command = COMMAND_REMOVE;
-    else if (ARG_CMP(1, "info"))      command = COMMAND_INFO;
 
     switch (command)
     {
@@ -256,7 +256,9 @@ int main(int argc, const char* argv[])
                 return 1;
             }
 
-            if (command != COMMAND_REINSTALL) break; // fall-through to install
+            if (command != COMMAND_REINSTALL) break;
+
+            [[fallthrough]];
         }
 
         case COMMAND_INSTALL: {
@@ -590,11 +592,6 @@ int main(int argc, const char* argv[])
 
         case COMMAND_REMOVE: {
             sh_remove(main_dir.string().c_str());
-            break;
-        }
-        
-        case COMMAND_INFO: {
-            printInfo(std::cout, argc, argv);
             break;
         }
 

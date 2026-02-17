@@ -3,6 +3,10 @@
 #include <unistd.h>
 #include <limits.h>
 
+#ifndef PATH_MAX
+#include <linux/limits.h>
+#endif
+
 CommandResult openDir(const char* path, CommandResult (*fn)(void*), void* ctx)
 {
     char oldcwd[PATH_MAX];
@@ -15,6 +19,8 @@ CommandResult openDir(const char* path, CommandResult (*fn)(void*), void* ctx)
 
     CommandResult rc = fn(ctx);
 
-    chdir(oldcwd);
+    // TODO
+    size_t __attribute__((unused)) _ = chdir(oldcwd);
+
     return rc;
 }

@@ -71,6 +71,9 @@ CommandResult invokeSystemCall(const char* cmd)
     if (!result.stdout_str || !result.stderr_str) {
         if (result.stdout_str) free(result.stdout_str);
         if (result.stderr_str) free(result.stderr_str);
+        result.stdout_str = NULL;
+        result.stderr_str = NULL;
+
         result.exit_code = -1;
         return result;
     }
@@ -157,10 +160,13 @@ CommandResult invokeSystemCall(const char* cmd)
         result.stdout_str = (char*)malloc(stdoutCap);
         result.stderr_str = (char*)malloc(stderrCap);
         if (!result.stdout_str || !result.stderr_str) { 
-            free(result.stdout_str); 
-            free(result.stderr_str); 
+            if (result.stdout_str) free(result.stdout_str);
+            if (result.stderr_str) free(result.stderr_str);
+            result.stdout_str = NULL;
+            result.stderr_str = NULL;
+
             result.exit_code = -1; 
-            return result; 
+            return result;
         }
 
         char buf[512];
